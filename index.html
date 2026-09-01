@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic CSS Watermark Masker</title>
+  <style>
+    :root {
+      --bg-color: #1e1e24;
+      --panel-color: #2a2a35;
+      --accent-color: #5865f2;
+      --text-color: #ffffff;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    p.subtitle {
+      color: #aaa;
+      margin-bottom: 25px;
+    }
+
+    .app-container {
+      display: flex;
+      gap: 30px;
+      max-width: 1200px;
+      width: 100%;
+      background: var(--panel-color);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    /* Controls Panel */
+    .controls {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 300px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #ddd;
+    }
+
+    input[type="text"], select {
+      background: #121216;
+      border: 1px solid #444;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-color);
+    }
+
+    .range-val {
+      font-size: 0.8rem;
+      color: #aaa;
+      align-self: flex-end;
+      margin-top: -5px;
+    }
+
+    /* Preview Workspace */
+    .preview-area {
+      flex: 2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #121216;
+      border-radius: 8px;
+      padding: 10px;
+      overflow: hidden;
+      min-height: 450px;
+    }
+
+    /* The core positioning context */
+    .image-wrapper {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    #target-image {
+      display: block;
+      max-width: 100%;
+      max-height: 500px;
+      height: auto;
+    }
+
+    /* The Mask Overlay Layer */
+    #mask-overlay {
+      position: absolute;
+      border: 2px dashed var(--accent-color);
+      box-sizing: border-box;
+      pointer-events: none; /* Prevents click hijacking */
+      
+      /* Active Mask Styling based on controls */
+      backdrop-filter: blur(0px);
+      background-color: rgba(255,255,255,0);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Watermark Masking Studio</h1>
+  <p class="subtitle">Dynamically target and obscure image watermarks using native CSS overlays.</p>
+
+  <div class="app-container">
+    
+    <!-- Left Panel: Parameter Controls -->
+    <div class="controls">
+      
+      <div class="control-group">
+        <label for="img-url">Image URL</label>
+        <input type="text" id="img-url" value="https://picsum.photos">
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #444; margin: 10px 0;">
+      <h3>Mask Positioning</h3>
+
+      <div class="control-group">
+        <label for="mask-top">Vertical Position (Top %)</label>
+        <input type="range" id="mask-top" min="0" max="100" value="40">
+        <span class="range-val" id="top-val">40%</span>
+      </div>
+
+      <div class="control-group">
+        <label for="mask-left">Horizontal Position (Left %)</label>
+        <input type="range" id="mask-left" min="0" max="100" value="25">
+        <span class="range-val" id="left-val">25%</span>
+      </div>
+
+      <div class="control-group">
+        <label for="mask-width">Mask Width (%)</label>
+        <input type="range" id="mask-width" min="5" max="100" value="50">
+        <span class="range-val" id="width-val">50%</span>
+      </div>
+
+      <div class="control-group">
+        <label for="mask-height">Mask Height (%)</label>
+        <input type="range" id="mask-height" min="5" max="100" value="20">
+        <span class="range-val" id="height-val">20%</span>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #444; margin: 10px 0;">
+      <h3>Filter Adjustments</h3>
+
+      <div class="control-group">
+        <label for="mask-type">Removal Strategy</label>
+        <select id="mask-type">
+          <option value="blur">CSS Heavy Blur (Best for Text)</option>
+          <option value="solid">Solid Color Patch (Best for Solid Backgrounds)</option>
+          <option value="pixel">Pixelate/Contrast Blend</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="intensity">Effect Intensity</label>
+        <input type="range" id="intensity" min="0" max="30" value="12">
+        <span class="range-val" id="intensity-val">12px</span>
+      </div>
+
+    </div>
+
+    <!-- Right Panel: Dynamic Render Area -->
+    <div class="preview-area">
+      <div class="image-wrapper">
+        <img id="target-image" src="" alt="Target workspace image">
+        <div id="mask-overlay"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Elements Selector
+    const imgUrlInput = document.getElementById('img-url');
+    const targetImage = document.getElementById('target-image');
+    const maskOverlay = document.getElementById('mask-overlay');
+    
+    // Sliders
+    const topSlider = document.getElementById('mask-top');
+    const leftSlider = document.getElementById('mask-left');
+    const widthSlider = document.getElementById('mask-width');
+    const heightSlider = document.getElementById('mask-height');
+    const intensitySlider = document.getElementById('intensity');
+    const typeSelect = document.getElementById('mask-type');
+
+    // Values Display
+    const topVal = document.getElementById('top-val');
+    const leftVal = document.getElementById('left-val');
+    const widthVal = document.getElementById('width-val');
+    const heightVal = document.getElementById('height-val');
+    const intensityVal = document.getElementById('intensity-val');
+
+    // Update Image Source
+    function updateImage() {
+      targetImage.src = imgUrlInput.value;
+    }
+
+    // Main Engine: Map parameters to CSS Real-time Changes
+    function applyMaskUpdates() {
+      // 1. Text Labels updates
+      topVal.textContent = topSlider.value + '%';
+      leftVal.textContent = leftSlider.value + '%';
+      widthVal.textContent = widthSlider.value + '%';
+      heightVal.textContent = heightSlider.value + '%';
+
+      // 2. Adjust dimensions & placement coordinates
+      maskOverlay.style.top = topSlider.value + '%';
+      maskOverlay.style.left = leftSlider.value + '%';
+      maskOverlay.style.width = widthSlider.value + '%';
+      maskOverlay.style.height = heightSlider.value + '%';
+
+      // 3. Evaluate filter settings
+      const mode = typeSelect.value;
+      const power = intensitySlider.value;
+
+      if (mode === 'blur') {
+        intensityVal.textContent = power + 'px';
+        maskOverlay.style.backdropFilter = `blur(${power}px)`;
+        maskOverlay.style.backgroundColor = 'transparent';
+      } else if (mode === 'solid') {
+        intensityVal.textContent = (power/30 * 100).toFixed(0) + '% Opacity';
+        maskOverlay.style.backdropFilter = 'none';
+        maskOverlay.style.backgroundColor = `rgba(30, 30, 36, ${power / 30})`; // Blends container color
+      } else if (mode === 'pixel') {
+        intensityVal.textContent = 'Active Layer';
+        maskOverlay.style.backdropFilter = `contrast(${power * 10}%) brightness(120%) saturate(0%)`;
+        maskOverlay.style.backgroundColor = 'transparent';
+      }
+    }
+
+    // Attach Live Listeners
+    imgUrlInput.addEventListener('input', updateImage);
+    [topSlider, leftSlider, widthSlider, heightSlider, intensitySlider, typeSelect].forEach(element => {
+      element.addEventListener('input', applyMaskUpdates);
+    });
+
+    // Run Setup on page initialization
+    updateImage();
+    applyMaskUpdates();
+  </script>
+</body>
+</html>
