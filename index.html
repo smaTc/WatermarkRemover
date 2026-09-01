@@ -3,268 +3,274 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic CSS Watermark Masker</title>
+  <title>Sophisticated Watermark Suppressor</title>
   <style>
-    :root {
-      --bg-color: #1e1e24;
-      --panel-color: #2a2a35;
-      --accent-color: #5865f2;
-      --text-color: #ffffff;
-    }
-
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
       margin: 0;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      color: #333;
     }
-
-    h1 {
-      margin-bottom: 5px;
-    }
-
-    p.subtitle {
-      color: #aaa;
-      margin-bottom: 25px;
-    }
-
     .app-container {
-      display: flex;
-      gap: 30px;
-      max-width: 1200px;
-      width: 100%;
-      background: var(--panel-color);
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
       padding: 25px;
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-
-    /* Controls Panel */
-    .controls {
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #1a1a1a;
+      border-bottom: 2px solid #eaeaea;
+      padding-bottom: 10px;
+    }
+    .input-group {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"] {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      min-width: 300px;
-    }
-
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #ddd;
-    }
-
-    input[type="text"], select {
-      background: #121216;
-      border: 1px solid #444;
-      color: white;
       padding: 10px;
+      border: 1px solid #ccc;
       border-radius: 6px;
-      font-size: 0.9rem;
+      font-size: 14px;
     }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent-color);
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
     }
-
-    .range-val {
-      font-size: 0.8rem;
-      color: #aaa;
-      align-self: flex-end;
-      margin-top: -5px;
+    button:hover {
+      background-color: #0056b3;
     }
-
-    /* Preview Workspace */
-    .preview-area {
-      flex: 2;
+    .control-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .control-item {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #121216;
+      flex-direction: column;
+    }
+    .control-item label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .workspace { grid-template-columns: 1fr; }
+    }
+    .view-box {
+      border: 2px dashed #ccc;
       border-radius: 8px;
       padding: 10px;
-      overflow: hidden;
-      min-height: 450px;
+      text-align: center;
+      background: #fafafa;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-
-    /* The core positioning context */
-    .image-wrapper {
-      position: relative;
-      display: inline-block;
-      max-width: 100%;
+    .view-box h3 {
+      margin-top: 0;
+      font-size: 14px;
+      color: #666;
     }
-
-    #target-image {
-      display: block;
+    canvas, img {
       max-width: 100%;
-      max-height: 500px;
+      max-height: 450px;
       height: auto;
+      object-fit: contain;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
-    /* The Mask Overlay Layer */
-    #mask-overlay {
-      position: absolute;
-      border: 2px dashed var(--accent-color);
-      box-sizing: border-box;
-      pointer-events: none; /* Prevents click hijacking */
-      
-      /* Active Mask Styling based on controls */
-      backdrop-filter: blur(0px);
-      background-color: rgba(255,255,255,0);
+    .error-msg {
+      color: #dc3545;
+      font-size: 14px;
+      margin-top: 5px;
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <h1>Watermark Masking Studio</h1>
-  <p class="subtitle">Dynamically target and obscure image watermarks using native CSS overlays.</p>
+<div class="app-container">
+  <h1>Sophisticated Image Watermark Suppressor</h1>
+  
+  <!-- URL Entry Field -->
+  <div class="input-group">
+    <input type="text" id="imageUrl" placeholder="Paste image URL here..." value="https://placehold.co">
+    <button id="loadBtn">Load Image</button>
+  </div>
+  <div id="errorLog" class="error-msg">CORS restriction hit. Please make sure the image URL allows cross-origin requests, or try a different URL.</div>
 
-  <div class="app-container">
-    
-    <!-- Left Panel: Parameter Controls -->
-    <div class="controls">
-      
-      <div class="control-group">
-        <label for="img-url">Image URL</label>
-        <input type="text" id="img-url" value="https://picsum.photos">
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid #444; margin: 10px 0;">
-      <h3>Mask Positioning</h3>
-
-      <div class="control-group">
-        <label for="mask-top">Vertical Position (Top %)</label>
-        <input type="range" id="mask-top" min="0" max="100" value="40">
-        <span class="range-val" id="top-val">40%</span>
-      </div>
-
-      <div class="control-group">
-        <label for="mask-left">Horizontal Position (Left %)</label>
-        <input type="range" id="mask-left" min="0" max="100" value="25">
-        <span class="range-val" id="left-val">25%</span>
-      </div>
-
-      <div class="control-group">
-        <label for="mask-width">Mask Width (%)</label>
-        <input type="range" id="mask-width" min="5" max="100" value="50">
-        <span class="range-val" id="width-val">50%</span>
-      </div>
-
-      <div class="control-group">
-        <label for="mask-height">Mask Height (%)</label>
-        <input type="range" id="mask-height" min="5" max="100" value="20">
-        <span class="range-val" id="height-val">20%</span>
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid #444; margin: 10px 0;">
-      <h3>Filter Adjustments</h3>
-
-      <div class="control-group">
-        <label for="mask-type">Removal Strategy</label>
-        <select id="mask-type">
-          <option value="blur">CSS Heavy Blur (Best for Text)</option>
-          <option value="solid">Solid Color Patch (Best for Solid Backgrounds)</option>
-          <option value="pixel">Pixelate/Contrast Blend</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="intensity">Effect Intensity</label>
-        <input type="range" id="intensity" min="0" max="30" value="12">
-        <span class="range-val" id="intensity-val">12px</span>
-      </div>
-
+  <!-- Options Interface -->
+  <div class="control-panel">
+    <div class="control-item">
+      <label for="thresholdRange">White Threshold (Cutoff): <span id="thresholdVal">200</span></label>
+      <input type="range" id="thresholdRange" min="100" max="255" value="200">
     </div>
-
-    <!-- Right Panel: Dynamic Render Area -->
-    <div class="preview-area">
-      <div class="image-wrapper">
-        <img id="target-image" src="" alt="Target workspace image">
-        <div id="mask-overlay"></div>
-      </div>
+    <div class="control-item">
+      <label for="contrastRange">Contrast Boost: <span id="contrastVal">0</span>%</label>
+      <input type="range" id="contrastRange" min="-50" max="100" value="0">
     </div>
-
+    <div class="control-item">
+      <label for="brightnessRange">Brightness Adjust: <span id="brightnessVal">0</span>%</label>
+      <input type="range" id="brightnessRange" min="-50" max="50" value="0">
+    </div>
   </div>
 
-  <script>
-    // Elements Selector
-    const imgUrlInput = document.getElementById('img-url');
-    const targetImage = document.getElementById('target-image');
-    const maskOverlay = document.getElementById('mask-overlay');
+  <!-- Dual Workspace Displays -->
+  <div class="workspace">
+    <div class="view-box">
+      <h3>Original Source Image</h3>
+      <img id="sourceImg" crossorigin="anonymous" src="" alt="Source waiting..." style="display:none;">
+    </div>
+    <div class="view-box">
+      <h3>Processed (Watermark Removed)</h3>
+      <canvas id="outputCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  const imageUrlInput = document.getElementById('imageUrl');
+  const loadBtn = document.getElementById('loadBtn');
+  const sourceImg = document.getElementById('sourceImg');
+  const outputCanvas = document.getElementById('outputCanvas');
+  const ctx = outputCanvas.getContext('2d');
+  const errorLog = document.getElementById('errorLog');
+
+  // Control Elements
+  const thresholdRange = document.getElementById('thresholdRange');
+  const contrastRange = document.getElementById('contrastRange');
+  const brightnessRange = document.getElementById('brightnessRange');
+
+  let originalImageData = null;
+
+  // Event Listeners for Live Adjustments
+  loadBtn.addEventListener('click', loadImage);
+  thresholdRange.addEventListener('input', updateValuesAndProcess);
+  contrastRange.addEventListener('input', updateValuesAndProcess);
+  brightnessRange.addEventListener('input', updateValuesAndProcess);
+
+  function loadImage() {
+    errorLog.style.display = 'none';
+    const url = imageUrlInput.value.trim();
+    if (!url) return;
+
+    // Trigger anonymous handling to try passing canvas security guidelines
+    sourceImg.crossOrigin = "anonymous";
+    sourceImg.src = url;
+  }
+
+  sourceImg.onload = function() {
+    sourceImg.style.display = 'block';
+    outputCanvas.width = sourceImg.naturalWidth;
+    outputCanvas.height = sourceImg.naturalHeight;
     
-    // Sliders
-    const topSlider = document.getElementById('mask-top');
-    const leftSlider = document.getElementById('mask-left');
-    const widthSlider = document.getElementById('mask-width');
-    const heightSlider = document.getElementById('mask-height');
-    const intensitySlider = document.getElementById('intensity');
-    const typeSelect = document.getElementById('mask-type');
-
-    // Values Display
-    const topVal = document.getElementById('top-val');
-    const leftVal = document.getElementById('left-val');
-    const widthVal = document.getElementById('width-val');
-    const heightVal = document.getElementById('height-val');
-    const intensityVal = document.getElementById('intensity-val');
-
-    // Update Image Source
-    function updateImage() {
-      targetImage.src = imgUrlInput.value;
+    try {
+      ctx.drawImage(sourceImg, 0, 0);
+      originalImageData = ctx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
+      processImage();
+    } catch (e) {
+      console.error("Canvas security error:", e);
+      errorLog.style.display = 'block';
     }
+  };
 
-    // Main Engine: Map parameters to CSS Real-time Changes
-    function applyMaskUpdates() {
-      // 1. Text Labels updates
-      topVal.textContent = topSlider.value + '%';
-      leftVal.textContent = leftSlider.value + '%';
-      widthVal.textContent = widthSlider.value + '%';
-      heightVal.textContent = heightSlider.value + '%';
+  sourceImg.onerror = function() {
+    alert("Failed to load image. Ensure it's a valid link direct to an image file.");
+  };
 
-      // 2. Adjust dimensions & placement coordinates
-      maskOverlay.style.top = topSlider.value + '%';
-      maskOverlay.style.left = leftSlider.value + '%';
-      maskOverlay.style.width = widthSlider.value + '%';
-      maskOverlay.style.height = heightSlider.value + '%';
+  function updateValuesAndProcess() {
+    document.getElementById('thresholdVal').innerText = thresholdRange.value;
+    document.getElementById('contrastVal').innerText = contrastRange.value;
+    document.getElementById('brightnessVal').innerText = brightnessRange.value;
+    if (originalImageData) {
+      processImage();
+    }
+  }
 
-      // 3. Evaluate filter settings
-      const mode = typeSelect.value;
-      const power = intensitySlider.value;
+  // The Sophisticated Processing Algorithm
+  function processImage() {
+    if (!originalImageData) return;
 
-      if (mode === 'blur') {
-        intensityVal.textContent = power + 'px';
-        maskOverlay.style.backdropFilter = `blur(${power}px)`;
-        maskOverlay.style.backgroundColor = 'transparent';
-      } else if (mode === 'solid') {
-        intensityVal.textContent = (power/30 * 100).toFixed(0) + '% Opacity';
-        maskOverlay.style.backdropFilter = 'none';
-        maskOverlay.style.backgroundColor = `rgba(30, 30, 36, ${power / 30})`; // Blends container color
-      } else if (mode === 'pixel') {
-        intensityVal.textContent = 'Active Layer';
-        maskOverlay.style.backdropFilter = `contrast(${power * 10}%) brightness(120%) saturate(0%)`;
-        maskOverlay.style.backgroundColor = 'transparent';
+    // Clone the pristine, unedited image details
+    const imgData = new ImageData(
+      new Uint8ClampedArray(originalImageData.data),
+      originalImageData.width,
+      originalImageData.height
+    );
+    
+    const data = imgData.data;
+    const threshold = parseInt(thresholdRange.value);
+    const contrast = parseInt(contrastRange.value);
+    const brightness = parseInt(brightnessRange.value);
+
+    // Factors calculation
+    const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+    const brightnessOffset = brightness * 2.55;
+
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+
+      // 1. Calculate luminance (perceived brightness of the pixel)
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      // 2. If pixel is lighter than our threshold, it is likely part of the watermark.
+      // Force it cleanly to white to cancel the semi-transparent text out completely.
+      if (luminance > threshold) {
+        data[i] = 255;     // Red
+        data[i + 1] = 255; // Green
+        data[i + 2] = 255; // Blue
+        continue;
       }
+
+      // 3. Apply standard contrast/brightness tuning to recover details around the edit
+      if (brightness !== 0) {
+        r += brightnessOffset;
+        g += brightnessOffset;
+        b += brightnessOffset;
+      }
+      if (contrast !== 0) {
+        r = contrastFactor * (r - 128) + 128;
+        g = contrastFactor * (g - 128) + 128;
+        b = contrastFactor * (b - 128) + 128;
+      }
+
+      // Clamp values back into 0-255 boundaries
+      data[i] = Math.min(255, Math.max(0, r));
+      data[i + 1] = Math.min(255, Math.max(0, g));
+      data[i + 2] = Math.min(255, Math.max(0, b));
     }
 
-    // Attach Live Listeners
-    imgUrlInput.addEventListener('input', updateImage);
-    [topSlider, leftSlider, widthSlider, heightSlider, intensitySlider, typeSelect].forEach(element => {
-      element.addEventListener('input', applyMaskUpdates);
-    });
+    // Paint the processed canvas layer back to view
+    ctx.putImageData(imgData, 0, 0);
+  }
 
-    // Run Setup on page initialization
-    updateImage();
-    applyMaskUpdates();
-  </script>
+  // Auto-load default test link on start
+  loadImage();
+</script>
+
 </body>
 </html>
