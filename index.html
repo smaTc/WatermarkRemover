@@ -1,37 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sophisticated Watermark Suppressor</title>
+  <title>CSS Z-Index Wassermark Steuerung</title>
   <style>
+    /* Basis-Layout */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #f4f6f9;
       margin: 0;
       padding: 20px;
       color: #333;
     }
+
     .app-container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: 0 auto;
       background: white;
       padding: 25px;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
+
     h1 {
       margin-top: 0;
-      font-size: 24px;
-      color: #1a1a1a;
-      border-bottom: 2px solid #eaeaea;
+      font-size: 22px;
+      border-bottom: 2px solid #eee;
       padding-bottom: 10px;
     }
+
+    /* URL Eingabezeile */
     .input-group {
-      margin-bottom: 20px;
       display: flex;
       gap: 10px;
+      margin-bottom: 20px;
     }
+
     input[type="text"] {
       flex: 1;
       padding: 10px;
@@ -39,18 +44,22 @@
       border-radius: 6px;
       font-size: 14px;
     }
+
     button {
       padding: 10px 20px;
-      background-color: #007bff;
+      background-color: #28a745;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
     }
+
     button:hover {
-      background-color: #0056b3;
+      background-color: #218838;
     }
+
+    /* CSS Optionen Bedienfeld */
     .control-panel {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -60,216 +69,135 @@
       border-radius: 8px;
       margin-bottom: 20px;
     }
+
     .control-item {
       display: flex;
       flex-direction: column;
     }
+
     .control-item label {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: bold;
       margin-bottom: 5px;
     }
-    .workspace {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+
+    select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
-    @media (max-width: 768px) {
-      .workspace { grid-template-columns: 1fr; }
-    }
-    .view-box {
-      border: 2px dashed #ccc;
+
+    /* --- DIE Z-INDEX WASSERMARK IMPLEMENTIERUNG --- */
+    .watermark-preview-box {
+      position: relative; /* Wichtig für die absolute Positionierung des Klon-Layers */
+      min-height: 400px;
+      border: 2px solid #dee2e6;
       border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      background: #fafafa;
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      padding: 30px;
+      overflow: hidden;
+      background-color: #ffffff;
     }
-    .view-box h3 {
-      margin-top: 0;
-      font-size: 14px;
-      color: #666;
+
+    /* Das eigentliche Text- und Inhalts-Layer (Sitzt oben) */
+    .content-layer {
+      position: relative;
+      z-index: 2; /* Höherer z-index sorgt dafür, dass Text immer scharf und klickbar bleibt */
+      color: #111;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.8); /* Erhöht die Lesbarkeit über dem Bild */
     }
-    canvas, img {
-      max-width: 100%;
-      max-height: 450px;
-      height: auto;
-      object-fit: contain;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .error-msg {
-      color: #dc3545;
-      font-size: 14px;
-      margin-top: 5px;
-      display: none;
+
+    /* Das isolierte Wassermark-Layer per CSS Pseudo-Element */
+    .watermark-preview-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      
+      /* Variablen werden dynamisch per JavaScript aktualisiert */
+      background-image: var(--bg-url);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      
+      /* Die Kern-CSS-Steuerungen für Transparenz und Ebenen-Anordnung */
+      opacity: var(--bg-opacity);
+      mix-blend-mode: var(--bg-blend);
+      z-index: 1; /* Niedrigerer z-index als das content-layer */
+      pointer-events: none; /* Klicks fallen durch das Wassermark hindurch auf den Text */
     }
   </style>
 </head>
 <body>
 
 <div class="app-container">
-  <h1>Sophisticated Image Watermark Suppressor</h1>
+  <h1>CSS Z-Index Wassermark Steuerung</h1>
   
-  <!-- URL Entry Field -->
+  <!-- URL Eingabe -->
   <div class="input-group">
-    <input type="text" id="imageUrl" placeholder="Paste image URL here..." value="https://placehold.co">
-    <button id="loadBtn">Load Image</button>
+    <input type="text" id="imageUrl" placeholder="Bild-URL hier einfügen..." value="https://placehold.co">
+    <button id="applyBtn">CSS Aktualisieren</button>
   </div>
-  <div id="errorLog" class="error-msg">CORS restriction hit. Please make sure the image URL allows cross-origin requests, or try a different URL.</div>
 
-  <!-- Options Interface -->
+  <!-- Live CSS Regler -->
   <div class="control-panel">
     <div class="control-item">
-      <label for="thresholdRange">White Threshold (Cutoff): <span id="thresholdVal">200</span></label>
-      <input type="range" id="thresholdRange" min="100" max="255" value="200">
+      <label for="opacityRange">CSS opacity: <span id="opacityVal">0.15</span></label>
+      <input type="range" id="opacityRange" min="0" max="100" value="15">
     </div>
+    
     <div class="control-item">
-      <label for="contrastRange">Contrast Boost: <span id="contrastVal">0</span>%</label>
-      <input type="range" id="contrastRange" min="-50" max="100" value="0">
-    </div>
-    <div class="control-item">
-      <label for="brightnessRange">Brightness Adjust: <span id="brightnessVal">0</span>%</label>
-      <input type="range" id="brightnessRange" min="-50" max="50" value="0">
+      <label for="blendSelect">CSS mix-blend-mode:</label>
+      <select id="blendSelect">
+        <option value="normal">normal (Standard)</option>
+        <option value="multiply">multiply (Blendet Weiß aus)</option>
+        <option value="screen">screen (Blendet Schwarz aus)</option>
+        <option value="overlay">overlay (Kontrast-Anpassung)</option>
+      </select>
     </div>
   </div>
 
-  <!-- Dual Workspace Displays -->
-  <div class="workspace">
-    <div class="view-box">
-      <h3>Original Source Image</h3>
-      <img id="sourceImg" crossorigin="anonymous" src="" alt="Source waiting..." style="display:none;">
-    </div>
-    <div class="view-box">
-      <h3>Processed (Watermark Removed)</h3>
-      <canvas id="outputCanvas"></canvas>
+  <!-- Ausgabe-Box mit der CSS-Struktur -->
+  <div class="watermark-preview-box" id="previewBox">
+    <div class="content-layer">
+      <h2>Vordergrund-Text (Scharf & Unberührt)</h2>
+      <p>Dieser Text liegt im Element <code>.content-layer</code> mit einem höheren <code>z-index: 2</code>.</p>
+      <p>Das Wassermark-Bild befindet sich im CSS-Pseudo-Element <code>::before</code> auf der Ebene <code>z-index: 1</code>. Dadurch verändert die Transparenz (Opacity) ausschließlich das Bild im Hintergrund, während dieser Text absolut leserlich und unbeeinflusst bleibt.</p>
+      <button onclick="alert('Inhaltsebene ist klickbar!')">Interaktiver Test-Button</button>
     </div>
   </div>
 </div>
 
 <script>
   const imageUrlInput = document.getElementById('imageUrl');
-  const loadBtn = document.getElementById('loadBtn');
-  const sourceImg = document.getElementById('sourceImg');
-  const outputCanvas = document.getElementById('outputCanvas');
-  const ctx = outputCanvas.getContext('2d');
-  const errorLog = document.getElementById('errorLog');
+  const applyBtn = document.getElementById('applyBtn');
+  const previewBox = document.getElementById('previewBox');
+  const opacityRange = document.getElementById('opacityRange');
+  const blendSelect = document.getElementById('blendSelect');
+  const opacityVal = document.getElementById('opacityVal');
 
-  // Control Elements
-  const thresholdRange = document.getElementById('thresholdRange');
-  const contrastRange = document.getElementById('contrastRange');
-  const brightnessRange = document.getElementById('brightnessRange');
+  // Event-Listener für Live-Vorschau
+  applyBtn.addEventListener('click', updateCSSStyles);
+  opacityRange.addEventListener('input', updateCSSStyles);
+  blendSelect.addEventListener('change', updateCSSStyles);
 
-  let originalImageData = null;
-
-  // Event Listeners for Live Adjustments
-  loadBtn.addEventListener('click', loadImage);
-  thresholdRange.addEventListener('input', updateValuesAndProcess);
-  contrastRange.addEventListener('input', updateValuesAndProcess);
-  brightnessRange.addEventListener('input', updateValuesAndProcess);
-
-  function loadImage() {
-    errorLog.style.display = 'none';
+  function updateCSSStyles() {
     const url = imageUrlInput.value.trim();
-    if (!url) return;
+    const opacity = (opacityRange.value / 100).toFixed(2);
+    const blendMode = blendSelect.value;
 
-    // Trigger anonymous handling to try passing canvas security guidelines
-    sourceImg.crossOrigin = "anonymous";
-    sourceImg.src = url;
+    // Aktualisiert die Anzeige des numerischen Werts
+    opacityVal.innerText = opacity;
+
+    // Setzt die CSS-Variablen direkt auf dem Preview-Element
+    previewBox.style.setProperty('--bg-url', `url('${url}')`);
+    previewBox.style.setProperty('--bg-opacity', opacity);
+    previewBox.style.setProperty('--bg-blend', blendMode);
   }
 
-  sourceImg.onload = function() {
-    sourceImg.style.display = 'block';
-    outputCanvas.width = sourceImg.naturalWidth;
-    outputCanvas.height = sourceImg.naturalHeight;
-    
-    try {
-      ctx.drawImage(sourceImg, 0, 0);
-      originalImageData = ctx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
-      processImage();
-    } catch (e) {
-      console.error("Canvas security error:", e);
-      errorLog.style.display = 'block';
-    }
-  };
-
-  sourceImg.onerror = function() {
-    alert("Failed to load image. Ensure it's a valid link direct to an image file.");
-  };
-
-  function updateValuesAndProcess() {
-    document.getElementById('thresholdVal').innerText = thresholdRange.value;
-    document.getElementById('contrastVal').innerText = contrastRange.value;
-    document.getElementById('brightnessVal').innerText = brightnessRange.value;
-    if (originalImageData) {
-      processImage();
-    }
-  }
-
-  // The Sophisticated Processing Algorithm
-  function processImage() {
-    if (!originalImageData) return;
-
-    // Clone the pristine, unedited image details
-    const imgData = new ImageData(
-      new Uint8ClampedArray(originalImageData.data),
-      originalImageData.width,
-      originalImageData.height
-    );
-    
-    const data = imgData.data;
-    const threshold = parseInt(thresholdRange.value);
-    const contrast = parseInt(contrastRange.value);
-    const brightness = parseInt(brightnessRange.value);
-
-    // Factors calculation
-    const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-    const brightnessOffset = brightness * 2.55;
-
-    for (let i = 0; i < data.length; i += 4) {
-      let r = data[i];
-      let g = data[i + 1];
-      let b = data[i + 2];
-
-      // 1. Calculate luminance (perceived brightness of the pixel)
-      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-
-      // 2. If pixel is lighter than our threshold, it is likely part of the watermark.
-      // Force it cleanly to white to cancel the semi-transparent text out completely.
-      if (luminance > threshold) {
-        data[i] = 255;     // Red
-        data[i + 1] = 255; // Green
-        data[i + 2] = 255; // Blue
-        continue;
-      }
-
-      // 3. Apply standard contrast/brightness tuning to recover details around the edit
-      if (brightness !== 0) {
-        r += brightnessOffset;
-        g += brightnessOffset;
-        b += brightnessOffset;
-      }
-      if (contrast !== 0) {
-        r = contrastFactor * (r - 128) + 128;
-        g = contrastFactor * (g - 128) + 128;
-        b = contrastFactor * (b - 128) + 128;
-      }
-
-      // Clamp values back into 0-255 boundaries
-      data[i] = Math.min(255, Math.max(0, r));
-      data[i + 1] = Math.min(255, Math.max(0, g));
-      data[i + 2] = Math.min(255, Math.max(0, b));
-    }
-
-    // Paint the processed canvas layer back to view
-    ctx.putImageData(imgData, 0, 0);
-  }
-
-  // Auto-load default test link on start
-  loadImage();
+  // Initialer Start beim Laden der Seite
+  updateCSSStyles();
 </script>
 
 </body>
